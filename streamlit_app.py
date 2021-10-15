@@ -27,22 +27,30 @@ def find_max_corr(df, top_n=2):
     corr = df.corr()['SalePrice'][:].sort_values()
     # drop row with highest correlation, i.e. target value (SalePrice) itself
     corr.drop(corr.tail(1).index, inplace=True)
-    return corr.head(top_n).append(corr.tail(top_n))
+    top_n_indices = corr.abs().tail(top_n).index
+    return top_n_indices
 
 
 def draw_box_plot(df):
-    p = figure(title="example")
-    x = [1, 2, 3, 4, 5]
-    y = [6, 7, 2, 4, 5]
-    p.line(x, y, legend_label='Trend', line_width=2)
-    # p.line(df["YearBuilt"], df["SalePrice"])
-    st.bokeh_chart(p)
-    # st.write("Box plot")
-    # plt.figure(figsize=(40, 20))
-    # fig, ax = plt.subplots()
-    # sns.boxplot(x='YearBuilt', y="SalePrice", data=df, ax=ax)
-    # sns.swarmplot(x='YearBuilt', y="SalePrice", data=df, color=".25", ax=ax)
-    # st.pyplot(fig)
+    keywords = df.columns.tolist()
+    keywords.remove("YearBuilt")
+    keywords.remove("SalePrice")
+    keywords = ["SalePrice"] + keywords  # put sale price as the default option
+    dependent_var = st.selectbox(
+        'View trending of:',
+        keywords
+    )
+
+    min_year = df["YearBuilt"].min()
+    max_year = df["YearBuilt"].max()
+    values = st.slider('Select a range of values', min_year, max_year, (1960, 2010))
+
+    df_sub = df[(df["YearBuilt"] <= values[1]) & (df["YearBuilt"] >= values[0])]
+    plt.figure(figsize=(40, 20))
+    fig, ax = plt.subplots()
+    sns.boxplot(x='YearBuilt', y=dependent_var, data=df_sub, ax=ax)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+    st.pyplot(fig)
 
 
 def draw_correlation_map(df):
@@ -99,16 +107,17 @@ st.markdown("Out of {} features, {} are numerical features and {} are categorica
 st.subheader("How correlated are these values?")
 
 numeric_features = df_numeric.drop("SalePrice", axis=1).columns
-top_n = 3
+top_n = 10
 options = st.multiselect(
-    'Select features to view correlations (default values: top ' + str(top_n * 2) +
+    'Select features to view correlations (default values: top ' + str(top_n) +
     ' features that are correlated to price)',
     numeric_features,
-    find_max_corr(df_numeric, top_n).index.tolist()
+    find_max_corr(df_numeric, top_n).tolist()
 )
 
 options.append("SalePrice")
 draw_correlation_map(df_numeric[options])
 
-# Draw boxplot
-draw_box_plot(df)
+# Draw boxplot by year
+st.subheader("How do houses change over the year (based on built date)?")
+draw_box_plot(df_numeric)
