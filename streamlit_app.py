@@ -1,8 +1,9 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-import streamlit as st
 import seaborn as sns
+import streamlit as st
+from bokeh.plotting import figure
 
 sns.set(font_scale=1)
 # DATA_URL = "https://raw.githubusercontent.com/li-boxuan/streamlit-example/master/house_prices.csv"
@@ -29,8 +30,22 @@ def find_max_corr(df, top_n=2):
     return corr.head(top_n).append(corr.tail(top_n))
 
 
+def draw_box_plot(df):
+    p = figure(title="example")
+    x = [1, 2, 3, 4, 5]
+    y = [6, 7, 2, 4, 5]
+    p.line(x, y, legend_label='Trend', line_width=2)
+    # p.line(df["YearBuilt"], df["SalePrice"])
+    st.bokeh_chart(p)
+    # st.write("Box plot")
+    # plt.figure(figsize=(40, 20))
+    # fig, ax = plt.subplots()
+    # sns.boxplot(x='YearBuilt', y="SalePrice", data=df, ax=ax)
+    # sns.swarmplot(x='YearBuilt', y="SalePrice", data=df, color=".25", ax=ax)
+    # st.pyplot(fig)
+
+
 def draw_correlation_map(df):
-    st.write("Correlation map")
     correlation = df.corr()
     fig, ax = plt.subplots()
     sns.heatmap(correlation, ax=ax, cmap="YlGnBu", annot=True, fmt=".2f", square=True, annot_kws={"size":8})
@@ -67,12 +82,27 @@ with st.sidebar:
 #         Main Panel           #
 ################################
 
-# Draw correlation heatmap
+# Introduction
+st.header("What affect a house price?")
+st.markdown("Let us explore what the factors of the house price are, using 1500 data points collected in Ames, Iowa, "
+            "available on [Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques). See if this "
+            "gives you any insight on estimating housing prices!")
+
+num_of_features = len(df.columns) - 1
 df_numeric = df.select_dtypes(include=np.number)
+num_of_numeric_features = len(df_numeric.columns) - 1
+num_of_categorical_features = num_of_features - num_of_numeric_features
+st.markdown("Out of {} features, {} are numerical features and {} are categorical features.".format(
+            num_of_features, num_of_numeric_features, num_of_categorical_features))
+
+# Draw correlation heatmap
+st.subheader("How correlated are these values?")
+
 numeric_features = df_numeric.drop("SalePrice", axis=1).columns
 top_n = 3
 options = st.multiselect(
-    'Select features to view correlations (default values: top ' + str(top_n * 2) + ' correlated features)',
+    'Select features to view correlations (default values: top ' + str(top_n * 2) +
+    ' features that are correlated to price)',
     numeric_features,
     find_max_corr(df_numeric, top_n).index.tolist()
 )
@@ -80,4 +110,5 @@ options = st.multiselect(
 options.append("SalePrice")
 draw_correlation_map(df_numeric[options])
 
-
+# Draw boxplot
+draw_box_plot(df)
