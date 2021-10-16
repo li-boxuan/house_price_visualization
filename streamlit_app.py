@@ -17,7 +17,6 @@ def load_desc():
     return pd.read_csv(DESC_URL, header=None)
 
 
-@st.cache(persist=True)
 def load_gps_coordinates():
     return pd.read_csv(GPS_URL)
 
@@ -79,18 +78,10 @@ def draw_correlation_map(df):
 
 
 def draw_map(df_gps, df):
-    df_location = df[["Neighborhood"]].iloc[:2]
+    df_location = df[["Neighborhood"]]
     df_location["lat"] = df_location["Neighborhood"].apply(lambda x: df_gps[df_gps["Location"] == x]["Lat"].tolist()[0])
     df_location["lon"] = df_location["Neighborhood"].apply(lambda x: df_gps[df_gps["Location"] == x]["Lon"].tolist()[0])
     df_location.drop("Neighborhood", axis=1, inplace=True)
-    st.write(df_location)
-
-    df_location = pd.DataFrame(
-        np.array([[42.056210, -93.594300], [42.056210, -93.594300], [42.056210, -93.594300], [42.056210, -93.594300],
-                  [42.056210, -93.594300], [41.981240, -93.614670]]),
-        columns=['lat', 'lon']
-    )
-    st.write(df_location)
     st.pydeck_chart(pdk.Deck(
         map_style='mapbox://styles/mapbox/light-v9',
         initial_view_state=pdk.ViewState(
@@ -164,6 +155,11 @@ num_of_categorical_features = num_of_features - num_of_numeric_features
 st.markdown("Out of {} features, {} are numerical features and {} are categorical features.".format(
             num_of_features, num_of_numeric_features, num_of_categorical_features))
 
+# Draw map
+st.subheader("Where are those houses located?")
+df_gps = load_gps_coordinates()
+draw_map(df_gps, df)
+
 # Draw correlation heatmap
 st.subheader("How correlated are numerical values?")
 
@@ -189,6 +185,3 @@ df_categorical = df.select_dtypes(exclude=np.number)
 df_categorical["SalePrice"] = df["SalePrice"]
 draw_bar_plot(df_categorical)
 
-# Draw map
-df_gps = load_gps_coordinates()
-draw_map(df_gps, df)
