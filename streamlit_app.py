@@ -3,17 +3,23 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import streamlit as st
-from bokeh.plotting import figure
+import pydeck as pdk
 
 sns.set(font_scale=1)
 # DATA_URL = "https://raw.githubusercontent.com/li-boxuan/streamlit-example/master/house_prices.csv"
 DATA_URL = "./house_prices.csv"
 DESC_URL = "./description.csv"
+GPS_URL = "./gps_coordinates.csv"
 
 
 @st.cache(persist=True)
 def load_desc():
     return pd.read_csv(DESC_URL, header=None)
+
+
+@st.cache(persist=True)
+def load_gps_coordinates():
+    return pd.read_csv(GPS_URL)
 
 
 @st.cache(persist=True)
@@ -70,6 +76,49 @@ def draw_correlation_map(df):
     fig, ax = plt.subplots()
     sns.heatmap(correlation, ax=ax, cmap="YlGnBu", annot=True, fmt=".2f", square=True, annot_kws={"size":8})
     st.pyplot(fig)
+
+
+def draw_map(df_gps, df):
+    df_location = df[["Neighborhood"]].iloc[:2]
+    df_location["lat"] = df_location["Neighborhood"].apply(lambda x: df_gps[df_gps["Location"] == x]["Lat"].tolist()[0])
+    df_location["lon"] = df_location["Neighborhood"].apply(lambda x: df_gps[df_gps["Location"] == x]["Lon"].tolist()[0])
+    df_location.drop("Neighborhood", axis=1, inplace=True)
+    st.write(df_location)
+
+    df_location = pd.DataFrame(
+        np.array([[42.056210, -93.594300], [42.056210, -93.594300], [42.056210, -93.594300], [42.056210, -93.594300],
+                  [42.056210, -93.594300], [41.981240, -93.614670]]),
+        columns=['lat', 'lon']
+    )
+    st.write(df_location)
+    st.pydeck_chart(pdk.Deck(
+        map_style='mapbox://styles/mapbox/light-v9',
+        initial_view_state=pdk.ViewState(
+            latitude=42.026798,
+            longitude=-93.620178,
+            zoom=11,
+            pitch=50,
+        ),
+        layers=[
+            pdk.Layer(
+                'HexagonLayer',
+                data=df_location,
+                get_position='[lon, lat]',
+                radius=200,
+                elevation_scale=4,
+                elevation_range=[0, 1000],
+                pickable=True,
+                extruded=True,
+            ),
+            pdk.Layer(
+                'ScatterplotLayer',
+                data=df_location,
+                get_position='[lon, lat]',
+                get_color='[200, 30, 0, 160]',
+                get_radius=200,
+            ),
+        ],
+    ))
 
 
 # load data
@@ -139,3 +188,7 @@ st.subheader("What is the estimated sale price for each category?")
 df_categorical = df.select_dtypes(exclude=np.number)
 df_categorical["SalePrice"] = df["SalePrice"]
 draw_bar_plot(df_categorical)
+
+# Draw map
+df_gps = load_gps_coordinates()
+draw_map(df_gps, df)
