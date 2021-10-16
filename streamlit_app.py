@@ -31,6 +31,19 @@ def find_max_corr(df, top_n=2):
     return top_n_indices
 
 
+def draw_bar_plot(df):
+    keywords = df.columns.tolist()
+    keywords.remove("SalePrice")
+    independent_var = st.selectbox(
+        'View estimated price based on category:',
+        keywords
+    )
+    fig, ax = plt.subplots()
+    sns.barplot(x=independent_var, y="SalePrice", data=df, ax=ax)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+    st.pyplot(fig)
+
+
 def draw_box_plot(df):
     keywords = df.columns.tolist()
     keywords.remove("YearBuilt")
@@ -43,10 +56,9 @@ def draw_box_plot(df):
 
     min_year = df["YearBuilt"].min()
     max_year = df["YearBuilt"].max()
-    values = st.slider('Select a range of values', min_year, max_year, (1960, 2010))
+    values = st.slider('Select a range of years', min_year, max_year, (1960, 2010))
 
     df_sub = df[(df["YearBuilt"] <= values[1]) & (df["YearBuilt"] >= values[0])]
-    plt.figure(figsize=(40, 20))
     fig, ax = plt.subplots()
     sns.boxplot(x='YearBuilt', y=dependent_var, data=df_sub, ax=ax)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
@@ -104,7 +116,7 @@ st.markdown("Out of {} features, {} are numerical features and {} are categorica
             num_of_features, num_of_numeric_features, num_of_categorical_features))
 
 # Draw correlation heatmap
-st.subheader("How correlated are these values?")
+st.subheader("How correlated are numerical values?")
 
 numeric_features = df_numeric.drop("SalePrice", axis=1).columns
 top_n = 10
@@ -121,3 +133,9 @@ draw_correlation_map(df_numeric[options])
 # Draw boxplot by year
 st.subheader("How do houses change over the year (based on built date)?")
 draw_box_plot(df_numeric)
+
+# Draw categorical barplots
+st.subheader("What is the estimated sale price for each category?")
+df_categorical = df.select_dtypes(exclude=np.number)
+df_categorical["SalePrice"] = df["SalePrice"]
+draw_bar_plot(df_categorical)
