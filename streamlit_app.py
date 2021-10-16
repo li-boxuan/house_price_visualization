@@ -60,7 +60,7 @@ def draw_box_plot(df):
 
     min_year = df["YearBuilt"].min()
     max_year = df["YearBuilt"].max()
-    values = st.slider('Select a range of years', min_year, max_year, (1960, 2010))
+    values = st.slider('Select a range of years', int(min_year), int(max_year), (1960, 2010))
 
     df_sub = df[(df["YearBuilt"] <= values[1]) & (df["YearBuilt"] >= values[0])]
     fig, ax = plt.subplots()
