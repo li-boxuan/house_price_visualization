@@ -6,7 +6,6 @@ import streamlit as st
 import pydeck as pdk
 
 sns.set(font_scale=1)
-# DATA_URL = "https://raw.githubusercontent.com/li-boxuan/streamlit-example/master/house_prices.csv"
 DATA_URL = "./house_prices.csv"
 DESC_URL = "./description.csv"
 GPS_URL = "./gps_coordinates.csv"
