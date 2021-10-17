@@ -130,6 +130,8 @@ with st.sidebar:
 
     desc_df.columns = ["keyword", "description"]
     st.write(keyword, ":", desc_df[desc_df["keyword"] == keyword]["description"].tolist()[0])
+    st.markdown("For more information on meaning of each categorical field, see "
+                "[here](https://raw.githubusercontent.com/li-boxuan/house_price_visualization/main/categorical_info.txt)")
 
     if keyword == "SalePrice":
         st.write(df[keyword])
